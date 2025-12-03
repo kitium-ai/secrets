@@ -36,7 +36,11 @@ program
   .option("--forbid-patterns <patterns...>", "forbidden patterns")
   .action((name, value, options) => {
     const globals = program.opts();
-    const manager = buildManager(globals);
+    const manager = buildManager({
+      store: globals.store,
+      masterKey: globals.masterKey,
+      auditLog: globals.auditLog,
+    });
     const actor = identity(globals.subject ?? "cli", ["admin", "writer", "reader"], globals.tenant ?? "default");
     const policy = new Policy(
       options.policyName,
@@ -55,7 +59,11 @@ program
   .argument("secretId")
   .action((secretId, options) => {
     const globals = program.opts();
-    const manager = buildManager(globals);
+    const manager = buildManager({
+      store: globals.store,
+      masterKey: globals.masterKey,
+      auditLog: globals.auditLog,
+    });
     const actor = identity(globals.subject ?? "cli", ["reader"], globals.tenant ?? "default");
     const secret = manager.getSecret(secretId, actor);
     console.log(
@@ -80,7 +88,11 @@ program
   .argument("value")
   .action((secretId, value, options) => {
     const globals = program.opts();
-    const manager = buildManager(globals);
+    const manager = buildManager({
+      store: globals.store,
+      masterKey: globals.masterKey,
+      auditLog: globals.auditLog,
+    });
     const actor = identity(globals.subject ?? "cli", ["writer"], globals.tenant ?? "default");
     const secret = manager.putSecret(secretId, value, actor);
     console.log(JSON.stringify({ version: secret.latestVersion().version }, null, 2));
@@ -91,7 +103,11 @@ program
   .description("List secrets for the tenant")
   .action((options) => {
     const globals = program.opts();
-    const manager = buildManager(globals);
+    const manager = buildManager({
+      store: globals.store,
+      masterKey: globals.masterKey,
+      auditLog: globals.auditLog,
+    });
     const actor = identity(globals.subject ?? "cli", ["reader"], globals.tenant ?? "default");
     const secrets = manager.listSecrets(actor);
     console.log(
@@ -114,7 +130,11 @@ program
   .argument("secretId")
   .action((secretId, options) => {
     const globals = program.opts();
-    const manager = buildManager(globals);
+    const manager = buildManager({
+      store: globals.store,
+      masterKey: globals.masterKey,
+      auditLog: globals.auditLog,
+    });
     const actor = identity(globals.subject ?? "cli", ["admin"], globals.tenant ?? "default");
     manager.deleteSecret(secretId, actor);
     console.log(JSON.stringify({ deleted: secretId }, null, 2));

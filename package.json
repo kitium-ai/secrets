@@ -1,28 +1,96 @@
 {
-  "name": "secret-engine",
-  "version": "0.2.0",
+  "name": "@kitiumai/secrets",
+  "version": "1.0.0",
   "description": "Enterprise-grade secret management toolkit with encrypted storage, RBAC, and TypeScript APIs",
+  "keywords": [
+    "secrets",
+    "secret-management",
+    "encryption",
+    "aes-256-gcm",
+    "rbac",
+    "key-rotation",
+    "vault",
+    "typescript",
+    "node",
+    "cli",
+    "server",
+    "audit",
+    "policy",
+    "kitium",
+    "kitiumai"
+  ],
   "license": "MIT",
-  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kitium-ai/kitium-monorepo.git",
+    "directory": "packages/core/@kitiumai/secrets"
+  },
+  "bugs": {
+    "url": "https://github.com/kitium-ai/kitium-monorepo/issues"
+  },
+  "homepage": "https://github.com/kitium-ai/kitium-monorepo#readme",
+  "sideEffects": false,
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/esm/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "bin": {
-    "secret-engine": "dist/cli.js"
+    "secret-engine": "dist/cjs/cli.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "start:server": "node dist/server.js",
+    "build": "tsup src/index.ts src/cli.ts --format cjs,esm --dts --sourcemap --clean --target es2020 --platform node",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "start:server": "node dist/cjs/server.js",
     "dev:server": "ts-node src/server.ts",
-    "dev:cli": "ts-node src/cli.ts"
+    "dev:cli": "ts-node src/cli.ts",
+    "typecheck": "tsc -b --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:all": "node --input-type=module -e \"import { lintAll } from '@kitiumai/scripts/lint'; await lintAll(false);\"",
+    "test:coverage": "node --input-type=module -e \"import { runTestsCoverage } from '@kitiumai/scripts/test'; await runTestsCoverage();\"",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "security:audit": "node --input-type=module -e \"import { auditDependencies } from '@kitiumai/scripts/security'; const summary = await auditDependencies({ severityThreshold: 'moderate' }); if ((summary.severityCounts?.critical || 0) + (summary.severityCounts?.high || 0) + (summary.severityCounts?.moderate || 0) > 0) { console.log(JSON.stringify(summary, null, 2)); process.exit(1); } console.log('No blocking vulnerabilities');\"",
+    "security:secrets": "node --input-type=module -e \"import { scanSecrets } from '@kitiumai/scripts/security'; const result = await scanSecrets({ configPath: '.gitleaks.toml', failOnFinding: true }); if (result.findings?.length) { console.error(JSON.stringify(result.findings, null, 2)); process.exit(1); } console.log('No secrets detected');\"",
+    "ci:verify": "pnpm run lint:all && pnpm run test:coverage && pnpm run typecheck",
+    "changeset": "ensure-changeset && changeset",
+    "version": "ensure-changeset && changeset version",
+    "publish:set-token": "set-npm-token",
+    "publish:setup": "set-npm-token",
+    "publish:check": "npm whoami --registry https://registry.npmjs.org || npm login --registry https://registry.npmjs.org",
+    "publish:login": "npm login --registry https://registry.npmjs.org",
+    "publish:package": "pnpm run publish:check && pnpm publish --access public --no-git-checks --registry https://registry.npmjs.org",
+    "publish:package:token": "pnpm run publish:setup && pnpm publish --access public --no-git-checks --registry https://registry.npmjs.org",
+    "publish:package:otp": "pnpm run publish:check && pnpm publish --access public --no-git-checks --registry https://registry.npmjs.org --otp",
+    "publish:dry-run": "pnpm publish --access public --no-git-checks --dry-run --registry https://registry.npmjs.org",
+    "publish:dry-run:token": "pnpm run publish:setup && pnpm publish --access public --no-git-checks --dry-run --registry https://registry.npmjs.org",
+    "release": "pnpm version && pnpm install --lockfile-only"
   },
   "dependencies": {
     "commander": "^12.1.0",
     "express": "^4.19.2"
   },
   "devDependencies": {
+    "tsup": "^7.2.0",
+    "vitest": "^2.1.9",
     "@types/express": "^4.17.21",
     "@types/node": "^20.12.7",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "@kitiumai/vitest-helpers": "^2.0.1",
+    "@kitiumai/lint": "^2.0.1",
+    "@kitiumai/scripts": "^1.0.0",
+    "@kitiumai/config": "^2.0.1"
   }
 }

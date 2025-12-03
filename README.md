@@ -1,4 +1,4 @@
-# Secret Engine (TypeScript)
+# @kitiumai/secrets
 
 An enterprise-grade secret management toolkit implemented in TypeScript with encrypted storage, RBAC-aware APIs, rotation hooks, and developer-friendly CLI/HTTP endpoints. The package mirrors the evaluation recommendations for an end-to-end MVP while remaining lightweight for local and CI usage.
 
@@ -22,7 +22,7 @@ An enterprise-grade secret management toolkit implemented in TypeScript with enc
    ```
 3. Create a secret using the CLI (compiled output):
    ```bash
-   node dist/cli.js \
+   node dist/cjs/cli.js \
      --master-key "$MASTER_KEY" \
      --store ./data/secrets.json \
      --audit-log ./data/audit.log \
@@ -30,11 +30,11 @@ An enterprise-grade secret management toolkit implemented in TypeScript with enc
    ```
 4. Read the secret:
    ```bash
-   node dist/cli.js --master-key "$MASTER_KEY" get <secret-id>
+   node dist/cjs/cli.js --master-key "$MASTER_KEY" get <secret-id>
    ```
 5. Start the HTTP service locally:
    ```bash
-   node dist/server.js --master-key "$MASTER_KEY" --store ./data/secrets.json
+   node dist/cjs/server.js --master-key "$MASTER_KEY" --store ./data/secrets.json
    ```
 6. Fetch via HTTP:
    ```bash
@@ -43,12 +43,7 @@ An enterprise-grade secret management toolkit implemented in TypeScript with enc
 
 ### TypeScript SDK Example
 ```ts
-import {
-  FileSecretStore,
-  Identity,
-  Policy,
-  SecretManager,
-} from "./dist"; // replace with package name once published
+import { FileSecretStore, Identity, Policy, SecretManager } from "secret-engine";
 
 const store = new FileSecretStore("./data/secrets.json", "change-me", "./data/audit.log");
 const manager = new SecretManager(store);
