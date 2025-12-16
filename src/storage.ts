@@ -49,6 +49,7 @@ export class FileSecretStore implements SecretStore {
     const data = this.load();
     const stored = data[secretId];
     if (!stored) {
+      // eslint-disable-next-line unicorn/no-useless-undefined -- we want to return a promise
       return Promise.resolve(undefined);
     }
     return Promise.resolve(fromStoredSecret(stored, this.masterKey));
