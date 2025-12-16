@@ -1,17 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+import { Identity, Policy } from '../domain';
 import { SecretManager } from '../manager';
 import { FileSecretStore } from '../storage';
-import { Identity, Policy } from '../domain';
-import fs from 'fs';
-import path from 'path';
 
-const tmp = path.resolve(__dirname, '..', '..', '.tmp-tests');
-const storePath = path.join(tmp, 'secrets.json');
-const auditPath = path.join(tmp, 'audit.log');
+const temporary = path.resolve(__dirname, '..', '..', '.tmp-tests');
+const storePath = path.join(temporary, 'secrets.json');
+const auditPath = path.join(temporary, 'audit.log');
 
-function reset() {
-  fs.rmSync(tmp, { recursive: true, force: true });
-  fs.mkdirSync(tmp, { recursive: true });
+function reset(): void {
+  fs.rmSync(temporary, { recursive: true, force: true });
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- test-only temp directory
+  fs.mkdirSync(temporary, { recursive: true });
 }
 
 describe('manager', () => {

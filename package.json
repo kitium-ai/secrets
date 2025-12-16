@@ -55,8 +55,8 @@
     "dev:server": "ts-node src/server.ts",
     "dev:cli": "ts-node src/cli.ts",
     "typecheck": "tsc -b --noEmit",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "lint:all": "node --input-type=module -e \"import { lintAll } from '@kitiumai/scripts/lint'; await lintAll(false);\"",
     "test:coverage": "node --input-type=module -e \"import { runTestsCoverage } from '@kitiumai/scripts/test'; await runTestsCoverage();\"",
     "format": "prettier --check .",
@@ -82,15 +82,16 @@
     "express": "^4.19.2"
   },
   "devDependencies": {
-    "tsup": "^7.2.0",
-    "vitest": "^2.1.9",
+    "@kitiumai/config": "^3.1.4",
+    "@kitiumai/lint": "^3.0.0",
+    "@kitiumai/scripts": "^2.0.0",
+    "@kitiumai/vitest-helpers": "^3.0.0",
     "@types/express": "^4.17.21",
-    "@types/node": "^20.12.7",
+    "@types/node": "^24.10.1",
+    "husky": "^9.1.7",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5",
-    "@kitiumai/vitest-helpers": "^2.0.1",
-    "@kitiumai/lint": "^2.0.1",
-    "@kitiumai/scripts": "^1.0.0",
-    "@kitiumai/config": "^2.0.1"
+    "tsup": "^8.2.4",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.8"
   }
 }

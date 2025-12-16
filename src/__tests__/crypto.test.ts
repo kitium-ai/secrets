@@ -1,14 +1,15 @@
-import { describe, it, expect } from 'vitest';
-import { encrypt, decrypt, checksum } from '../crypto';
+import { describe, expect, it } from 'vitest';
+
+import { checksum, decrypt, encrypt } from '../crypto';
 
 describe('crypto', () => {
   const key = 'master-key-123';
   it('encrypts and decrypts symmetrically', () => {
-    const msg = 'super-secret';
-    const token = encrypt(msg, key);
+    const message = 'super-secret';
+    const token = encrypt(message, key);
     expect(token).toBeTypeOf('string');
     const plain = decrypt(token, key);
-    expect(plain).toBe(msg);
+    expect(plain).toBe(message);
   });
 
   it('checksum is stable', () => {

@@ -2,29 +2,33 @@ export class Policy {
   constructor(
     public name: string,
     public description: string,
-    public rotationDays: number = 90,
-    public minLength: number = 16,
+    public rotationDays = 90,
+    public minLength = 16,
     public forbidPatterns?: string[],
-    public allowedCidrs?: string[],
+    public allowedCidrs?: string[]
   ) {}
 }
 
 export class Identity {
-  constructor(public subject: string, public roles: string[], public tenant: string = "default") {}
+  constructor(
+    public subject: string,
+    public roles: string[],
+    public tenant = 'default'
+  ) {}
 
   hasRole(role: string): boolean {
     return this.roles.includes(role);
   }
 }
 
-export interface AuditLogEntry {
+export type AuditLogEntry = {
   timestamp: Date;
   subject: string;
   action: string;
   secretId?: string | null;
   tenant: string;
   metadata: Record<string, string>;
-}
+};
 
 export class SecretVersion {
   constructor(
@@ -32,7 +36,7 @@ export class SecretVersion {
     public createdAt: Date,
     public value: string,
     public checksum: string,
-    public createdBy: string,
+    public createdBy: string
   ) {}
 }
 
@@ -46,11 +50,17 @@ export class Secret {
     public createdBy: string,
     public versions: SecretVersion[],
     public description?: string,
-    public rotationHandler?: () => string | Promise<string>,
+    public rotationHandler?: () => string | Promise<string>
   ) {}
 
   latestVersion(): SecretVersion {
-    return [...this.versions].sort((a, b) => a.version - b.version).at(-1) as SecretVersion;
+    const [firstVersion] = this.versions;
+    if (!firstVersion) {
+      throw new Error('Secret has no versions');
+    }
+    return this.versions.reduce((latest, version) => {
+      return version.version > latest.version ? version : latest;
+    }, firstVersion);
   }
 
   nextVersionNumber(): number {
