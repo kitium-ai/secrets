@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { Identity, Policy } from '../domain';
 import { SecretManager } from '../manager';
-import { FileSecretStore } from '../storage';
+import { FileSecretStore, type SecretStoreConfig } from '../storage';
 
 const temporary = path.resolve(__dirname, '..', '..', '.tmp-tests');
 const storePath = path.join(temporary, 'secrets.json');
@@ -20,21 +20,26 @@ function reset(): void {
 describe('manager', () => {
   reset();
   const masterKey = 'test-master-key';
-  const store = new FileSecretStore(storePath, masterKey, auditPath);
+  const config: SecretStoreConfig = {
+    masterKey,
+    auditLogPath: auditPath,
+  };
+  const store = new FileSecretStore(storePath, config);
   const manager = new SecretManager(store);
   const actorAdmin = new Identity('tester', ['admin', 'writer', 'reader'], 'default');
   const actorReader = new Identity('reader', ['reader'], 'default');
   const policy = new Policy('default', 'test', 30, 8);
 
-  it('creates and retrieves secret', () => {
-    const secret = manager.createSecret('db-pass', 'P@ssw0rd!', policy, actorAdmin, 'db password');
-    const fetched = manager.getSecret(secret.id, actorReader);
+  it('creates and retrieves secret', async () => {
+    const secret = await manager.createSecret('db-pass', 'P@ssw0rd!', policy, actorAdmin, 'db password');
+    const fetched = await manager.getSecret(secret.id, actorReader);
     expect(fetched.latestVersion().value).toEqual('P@ssw0rd!');
   });
 
-  it('adds new version via put', () => {
-    const [s] = manager.listSecrets(actorReader);
-    const updated = manager.putSecret(s.id, 'NewP@ssw0rd!', actorAdmin);
+  it('adds new version via put', async () => {
+    const secrets = await manager.listSecrets(actorReader);
+    const [s] = secrets;
+    const updated = await manager.putSecret(s.id, 'NewP@ssw0rd!', actorAdmin);
     expect(updated.latestVersion().version).toBe(2);
   });
 });

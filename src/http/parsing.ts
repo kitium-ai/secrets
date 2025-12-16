@@ -16,6 +16,12 @@ type SecretCreatePayload = Partial<{
   value: unknown;
   description: unknown;
   policy: unknown;
+  ttl: unknown;
+}>;
+
+type SecretUpdatePayload = Partial<{
+  value: unknown;
+  ttl: unknown;
 }>;
 
 export function requireRouteParameter(request: Request, name: string): string {
@@ -62,6 +68,7 @@ export function parseCreateSecretPayload(body: unknown): {
   value: string;
   description?: string;
   policy: Policy;
+  ttl?: number;
 } {
   const payload: SecretCreatePayload =
     typeof body === 'object' && body !== null ? (body as SecretCreatePayload) : {};
@@ -70,16 +77,24 @@ export function parseCreateSecretPayload(body: unknown): {
   const value = requireStringBodyField(dictionary, 'value');
   const description = typeof payload.description === 'string' ? payload.description : undefined;
   const policy = parsePolicy(payload.policy);
+  const ttl = typeof payload.ttl === 'number' ? payload.ttl : undefined;
   return {
     name,
     value,
     ...(typeof description === 'string' ? { description } : {}),
     policy,
+    ...(typeof ttl === 'number' ? { ttl } : {}),
   };
 }
 
-export function parseUpdateSecretPayload(body: unknown): { value: string } {
-  const payload =
-    typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {};
-  return { value: requireStringBodyField(payload, 'value') };
+export function parseUpdateSecretPayload(body: unknown): { value: string; ttl?: number } {
+  const payload: SecretUpdatePayload =
+    typeof body === 'object' && body !== null ? (body as SecretUpdatePayload) : {};
+  const dictionary = payload as unknown as Record<string, unknown>;
+  const value = requireStringBodyField(dictionary, 'value');
+  const ttl = typeof payload.ttl === 'number' ? payload.ttl : undefined;
+  return {
+    value,
+    ...(typeof ttl === 'number' ? { ttl } : {}),
+  };
 }

@@ -36,8 +36,13 @@ export class SecretVersion {
     public createdAt: Date,
     public value: string,
     public checksum: string,
-    public createdBy: string
+    public createdBy: string,
+    public expiresAt?: Date
   ) {}
+
+  isExpired(): boolean {
+    return this.expiresAt ? new Date() > this.expiresAt : false;
+  }
 }
 
 export class Secret {

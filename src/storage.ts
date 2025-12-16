@@ -2,27 +2,38 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import type { AuditLogEntry, Identity, Secret } from './domain';
+import type { SecretStore, SecretStoreConfig } from './store/interface';
 import { appendAuditLog } from './store/audit';
 import { fromStoredSecret, type StoredSecret, toStoredSecret } from './store/serialization';
 
 export { allowAction, enforcePolicy } from './authz';
 export { recordObservation } from './observability';
+export type { SecretStore, SecretStoreConfig } from './store/interface';
+export { S3SecretStore, type S3SecretStoreConfig } from './store/s3';
+export { GCPStorageSecretStore, type GCPStorageSecretStoreConfig } from './store/gcp';
+export { PostgreSQLSecretStore, type PostgreSQLSecretStoreConfig } from './store/postgres';
 
-export class FileSecretStore {
+export class FileSecretStore implements SecretStore {
+  private readonly masterKey: string;
+  private readonly auditLogPath: string | undefined;
+
   constructor(
     private readonly storePath: string,
-    private readonly masterKey: string,
-    private readonly auditLogPath?: string
+    config: SecretStoreConfig
   ) {
+    this.masterKey = config.masterKey;
+    if (config.auditLogPath) {
+      this.auditLogPath = config.auditLogPath;
+    }
     // eslint-disable-next-line security/detect-non-literal-fs-filename -- file path comes from configuration
     fs.mkdirSync(directoryOf(this.storePath), { recursive: true });
-    if (auditLogPath) {
+    if (config.auditLogPath) {
       // eslint-disable-next-line security/detect-non-literal-fs-filename -- file path comes from configuration
-      fs.mkdirSync(directoryOf(auditLogPath), { recursive: true });
+      fs.mkdirSync(directoryOf(config.auditLogPath), { recursive: true });
     }
   }
 
-  listSecrets(tenant?: string): Secret[] {
+  listSecrets(tenant?: string): Promise<Secret[]> {
     const data = this.load();
     const secrets: Secret[] = [];
     for (const stored of Object.values(data)) {
@@ -31,19 +42,19 @@ export class FileSecretStore {
       }
       secrets.push(fromStoredSecret(stored, this.masterKey));
     }
-    return secrets;
+    return Promise.resolve(secrets);
   }
 
-  get(secretId: string): Secret | undefined {
+  get(secretId: string): Promise<Secret | undefined> {
     const data = this.load();
     const stored = data[secretId];
     if (!stored) {
-      return undefined;
+      return Promise.resolve(undefined);
     }
-    return fromStoredSecret(stored, this.masterKey);
+    return Promise.resolve(fromStoredSecret(stored, this.masterKey));
   }
 
-  save(secret: Secret, actor: Identity, action: string): void {
+  save(secret: Secret, actor: Identity, action: string): Promise<void> {
     const data = this.load();
     data[secret.id] = toStoredSecret(secret, this.masterKey);
     this.persist(data);
@@ -55,9 +66,10 @@ export class FileSecretStore {
       tenant: secret.tenant,
       metadata: { policy: secret.policy.name },
     });
+    return Promise.resolve();
   }
 
-  delete(secretId: string, actor: Identity): void {
+  delete(secretId: string, actor: Identity): Promise<void> {
     const data = this.load();
     delete data[secretId];
     this.persist(data);
@@ -69,6 +81,7 @@ export class FileSecretStore {
       tenant: actor.tenant,
       metadata: {},
     });
+    return Promise.resolve();
   }
 
   private load(): Record<string, StoredSecret> {
