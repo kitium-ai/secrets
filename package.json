@@ -37,13 +37,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kitium-ai/kitium-monorepo.git",
-    "directory": "packages/core/@kitiumai/secrets"
+    "url": "git+https://github.com/kitium-ai/secrets.git"
   },
   "bugs": {
-    "url": "https://github.com/kitium-ai/kitium-monorepo/issues"
+    "url": "https://github.com/kitium-ai/secrets/issues"
   },
-  "homepage": "https://github.com/kitium-ai/kitium-monorepo#readme",
+  "homepage": "https://github.com/kitium-ai/secrets#readme",
   "sideEffects": false,
   "main": "dist/index.js",
   "module": "dist/index.mjs",
