@@ -3,17 +3,17 @@ import crypto from 'node:crypto';
 import { allowAction, enforcePolicy } from './authz';
 import { checksum } from './crypto';
 import { type Identity, type Policy, Secret, SecretVersion } from './domain';
-import type { EventNotifier, SecretEvent } from './events';
+import type { KtSecretEvent, SecretNotifier } from './events';
 import { recordObservation } from './observability';
 import type { SecretStore } from './storage';
 
 export class SecretManager {
   constructor(
     private readonly store: SecretStore,
-    private readonly eventNotifier?: EventNotifier
+    private readonly eventNotifier?: SecretNotifier
   ) {}
 
-  private async emitEvent(event: SecretEvent): Promise<void> {
+  private async emitEvent(event: KtSecretEvent): Promise<void> {
     if (this.eventNotifier) {
       await this.eventNotifier.notify(event);
     }
@@ -58,7 +58,12 @@ export class SecretManager {
     return secret;
   }
 
-  async putSecret(secretId: string, value: string, actor: Identity, ttlSeconds?: number): Promise<Secret> {
+  async putSecret(
+    secretId: string,
+    value: string,
+    actor: Identity,
+    ttlSeconds?: number
+  ): Promise<Secret> {
     const secret = await this.getOrRaise(secretId);
     allowAction(actor, secret.tenant, 'writer');
     enforcePolicy(value, secret.policy);

@@ -12,14 +12,17 @@ type SerializableAuditEntry = {
 };
 
 function serialize(entry: AuditLogEntry): SerializableAuditEntry {
-  return {
+  const payload: SerializableAuditEntry = {
     timestamp: entry.timestamp.toISOString(),
     subject: entry.subject,
     action: entry.action,
-    secretId: entry.secretId,
     tenant: entry.tenant,
     metadata: entry.metadata,
   };
+  if (entry.secretId !== undefined) {
+    payload.secretId = entry.secretId;
+  }
+  return payload;
 }
 
 export function appendAuditLog(path: string, entry: AuditLogEntry): void {

@@ -1,14 +1,14 @@
 import { Client, type ClientConfig } from 'pg';
 
 import type { AuditLogEntry, Identity, Secret } from '../domain';
-import type { SecretStore, SecretStoreConfig } from './interface';
 import { appendAuditLog } from './audit';
+import type { SecretStore, SecretStoreConfig } from './interface';
 import { fromStoredSecret, type StoredSecret, toStoredSecret } from './serialization';
 
-export interface PostgreSQLSecretStoreConfig extends SecretStoreConfig {
+export type PostgreSQLSecretStoreConfig = {
   connectionString: string;
   tableName?: string;
-}
+} & SecretStoreConfig;
 
 export class PostgreSQLSecretStore implements SecretStore {
   private readonly config: ClientConfig;
@@ -31,14 +31,14 @@ export class PostgreSQLSecretStore implements SecretStore {
       await this.ensureTable(client);
 
       let query = 'SELECT data FROM $1';
-      const params: any[] = [this.tableName];
+      const parameters: string[] = [this.tableName];
 
       if (tenant) {
         query += ' WHERE tenant = $2';
-        params.push(tenant);
+        parameters.push(tenant);
       }
 
-      const result = await client.query(query, params);
+      const result = await client.query(query, parameters);
       const secrets: Secret[] = [];
 
       for (const row of result.rows) {
@@ -58,10 +58,10 @@ export class PostgreSQLSecretStore implements SecretStore {
       await client.connect();
       await this.ensureTable(client);
 
-      const result = await client.query(
-        'SELECT data FROM $1 WHERE id = $2',
-        [this.tableName, secretId]
-      );
+      const result = await client.query('SELECT data FROM $1 WHERE id = $2', [
+        this.tableName,
+        secretId,
+      ]);
 
       if (result.rows.length === 0) {
         return undefined;
@@ -89,7 +89,7 @@ export class PostgreSQLSecretStore implements SecretStore {
         [this.tableName, secret.id, secret.tenant, data]
       );
 
-      await this.log({
+      this.log({
         timestamp: new Date(),
         subject: actor.subject,
         action,
@@ -110,7 +110,7 @@ export class PostgreSQLSecretStore implements SecretStore {
 
       await client.query('DELETE FROM $1 WHERE id = $2', [this.tableName, secretId]);
 
-      await this.log({
+      this.log({
         timestamp: new Date(),
         subject: actor.subject,
         action: 'delete',
@@ -124,7 +124,8 @@ export class PostgreSQLSecretStore implements SecretStore {
   }
 
   private async ensureTable(client: Client): Promise<void> {
-    await client.query(`
+    await client.query(
+      `
       CREATE TABLE IF NOT EXISTS $1 (
         id TEXT PRIMARY KEY,
         tenant TEXT NOT NULL,
@@ -132,14 +133,19 @@ export class PostgreSQLSecretStore implements SecretStore {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       )
-    `, [this.tableName]);
+    `,
+      [this.tableName]
+    );
 
-    await client.query(`
+    await client.query(
+      `
       CREATE INDEX IF NOT EXISTS idx_$1_tenant ON $1 (tenant)
-    `, [this.tableName]);
+    `,
+      [this.tableName]
+    );
   }
 
-  private async log(entry: AuditLogEntry): Promise<void> {
+  private log(entry: AuditLogEntry): void {
     if (!this.auditLogPath) {
       return;
     }

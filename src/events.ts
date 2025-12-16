@@ -1,27 +1,28 @@
-export interface SecretEvent {
+export type KtSecretEvent = {
   type: 'created' | 'updated' | 'deleted' | 'accessed' | 'expired';
   secretId: string;
   tenant: string;
   timestamp: Date;
   actor: string;
-  metadata?: Record<string, any>;
-}
+  metadata?: Record<string, unknown>;
+};
 
-export interface EventNotifier {
-  notify(event: SecretEvent): Promise<void>;
-}
+export type SecretNotifier = {
+  notify(event: KtSecretEvent): Promise<void>;
+};
 
-export class WebhookNotifier implements EventNotifier {
+export class WebhookNotifier implements SecretNotifier {
   constructor(
     private readonly webhookUrl: string,
     private readonly headers?: Record<string, string>
   ) {}
 
-  async notify(event: SecretEvent): Promise<void> {
+  async notify(event: KtSecretEvent): Promise<void> {
     try {
       const response = await fetch(this.webhookUrl, {
         method: 'POST',
         headers: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention -- HTTP header name is standardized
           'Content-Type': 'application/json',
           ...this.headers,
         },
@@ -37,10 +38,10 @@ export class WebhookNotifier implements EventNotifier {
   }
 }
 
-export class CompositeNotifier implements EventNotifier {
-  constructor(private readonly notifiers: EventNotifier[]) {}
+export class CompositeNotifier implements SecretNotifier {
+  constructor(private readonly notifiers: SecretNotifier[]) {}
 
-  async notify(event: SecretEvent): Promise<void> {
-    await Promise.allSettled(this.notifiers.map(notifier => notifier.notify(event)));
+  async notify(event: KtSecretEvent): Promise<void> {
+    await Promise.allSettled(this.notifiers.map((notifier) => notifier.notify(event)));
   }
 }

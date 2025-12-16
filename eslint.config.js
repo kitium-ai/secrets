@@ -34,7 +34,11 @@ const fixNoRestrictedImports = (config) => {
 
   const patterns = options.patterns;
   const message = options.message;
-  if (!Array.isArray(patterns) || !patterns.every((pattern) => typeof pattern === 'string') || typeof message !== 'string') {
+  if (
+    !Array.isArray(patterns) ||
+    !patterns.every((pattern) => typeof pattern === 'string') ||
+    typeof message !== 'string'
+  ) {
     return config;
   }
 
@@ -88,6 +92,8 @@ export default [
       ],
       // Disabled temporarily due to eslint-plugin-import relying on CJS-only minimatch.
       'import/order': 'off',
+      // Avoid noisy false positives for key-based lookups on typed records/maps.
+      'security/detect-object-injection': 'off',
     },
   },
 ];

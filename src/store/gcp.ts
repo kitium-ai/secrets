@@ -1,16 +1,16 @@
 import { Storage } from '@google-cloud/storage';
 
 import type { AuditLogEntry, Identity, Secret } from '../domain';
-import type { SecretStore, SecretStoreConfig } from './interface';
 import { appendAuditLog } from './audit';
+import type { SecretStore, SecretStoreConfig } from './interface';
 import { fromStoredSecret, type StoredSecret, toStoredSecret } from './serialization';
 
-export interface GCPStorageSecretStoreConfig extends SecretStoreConfig {
+export type GCPStorageSecretStoreConfig = {
   bucket: string;
   projectId?: string;
   keyFilename?: string;
   keyPrefix?: string;
-}
+} & SecretStoreConfig;
 
 export class GCPStorageSecretStore implements SecretStore {
   private readonly storage: Storage;
@@ -57,7 +57,7 @@ export class GCPStorageSecretStore implements SecretStore {
     const data = await this.load();
     data[secret.id] = toStoredSecret(secret, this.masterKey);
     await this.persist(data);
-    await this.log({
+    this.log({
       timestamp: new Date(),
       subject: actor.subject,
       action,
@@ -71,7 +71,7 @@ export class GCPStorageSecretStore implements SecretStore {
     const data = await this.load();
     delete data[secretId];
     await this.persist(data);
-    await this.log({
+    this.log({
       timestamp: new Date(),
       subject: actor.subject,
       action: 'delete',
@@ -94,8 +94,8 @@ export class GCPStorageSecretStore implements SecretStore {
         return {};
       }
       return JSON.parse(body) as Record<string, StoredSecret>;
-    } catch (error: any) {
-      if (error.code === 404) {
+    } catch (error: unknown) {
+      if (isErrorWithCode(error) && error.code === 404) {
         return {};
       }
       throw error;
@@ -109,10 +109,19 @@ export class GCPStorageSecretStore implements SecretStore {
     });
   }
 
-  private async log(entry: AuditLogEntry): Promise<void> {
+  private log(entry: AuditLogEntry): void {
     if (!this.auditLogPath) {
       return;
     }
     appendAuditLog(this.auditLogPath, entry);
   }
+}
+
+function isErrorWithCode(error: unknown): error is { code: number } {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof (error as { code?: unknown }).code === 'number'
+  );
 }

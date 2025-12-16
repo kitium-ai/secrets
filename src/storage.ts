@@ -2,16 +2,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import type { AuditLogEntry, Identity, Secret } from './domain';
-import type { SecretStore, SecretStoreConfig } from './store/interface';
 import { appendAuditLog } from './store/audit';
+import type { SecretStore, SecretStoreConfig } from './store/interface';
 import { fromStoredSecret, type StoredSecret, toStoredSecret } from './store/serialization';
 
 export { allowAction, enforcePolicy } from './authz';
 export { recordObservation } from './observability';
-export type { SecretStore, SecretStoreConfig } from './store/interface';
-export { S3SecretStore, type S3SecretStoreConfig } from './store/s3';
 export { GCPStorageSecretStore, type GCPStorageSecretStoreConfig } from './store/gcp';
+export type { SecretStore, SecretStoreConfig } from './store/interface';
 export { PostgreSQLSecretStore, type PostgreSQLSecretStoreConfig } from './store/postgres';
+export { S3SecretStore, type S3SecretStoreConfig } from './store/s3';
 
 export class FileSecretStore implements SecretStore {
   private readonly masterKey: string;
@@ -85,9 +85,11 @@ export class FileSecretStore implements SecretStore {
   }
 
   private load(): Record<string, StoredSecret> {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- file path comes from configuration
     if (!fs.existsSync(this.storePath)) {
       return {};
     }
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- file path comes from configuration
     const raw = fs.readFileSync(this.storePath, 'utf8');
     if (!raw.trim()) {
       return {};
@@ -96,6 +98,7 @@ export class FileSecretStore implements SecretStore {
   }
 
   private persist(data: Record<string, StoredSecret>): void {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- file path comes from configuration
     fs.writeFileSync(this.storePath, JSON.stringify(data, null, 2));
   }
 
